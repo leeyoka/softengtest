@@ -1,0 +1,6 @@
+{
+  "name": "Aegis App",
+  "description": "AI-powered Family Digital Shield against scam calls and AI voice cloning. Inspired by Truecaller with real-time family alerts.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": []
+}

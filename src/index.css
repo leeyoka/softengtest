@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-aegis-green: #10B981;
+  --color-aegis-red: #EF4444;
+  --color-aegis-bg: #0A0C0B;
+  --color-aegis-card: #141716;
+  --color-aegis-border: #1F2422;
+  --color-primary: #10B981;
+}
+
+@layer base {
+  body {
+    @apply bg-aegis-bg text-slate-100 antialiased overflow-x-hidden;
+    user-select: none;
+  }
+}
+
+.pulsing-red {
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 20px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.pulsing-green {
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0% {
+    scale: 0.95;
+    opacity: 0.5;
+  }
+  50% {
+    scale: 1.05;
+    opacity: 1;
+  }
+  100% {
+    scale: 0.95;
+    opacity: 0.5;
+  }
+}
+
+/* Custom Hide Scrollbar */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}

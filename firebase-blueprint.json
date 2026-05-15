@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phoneNumber"]
+    },
+    "CallRecord": {
+      "title": "Call Record",
+      "description": "Log of incoming calls and their security analysis",
+      "type": "object",
+      "properties": {
+        "phoneNumber": { "type": "string" },
+        "callerName": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["answered", "missed", "blocked"] },
+        "duration": { "type": "number" },
+        "threatLevel": { "type": "string", "enum": ["Threat", "Caution", "Safe"] },
+        "scamIndicators": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["phoneNumber", "timestamp", "threatLevel", "userId"]
+    },
+    "FamilyMember": {
+      "title": "Family Member",
+      "description": "Trusted family contacts for safety alerts",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "memberName": { "type": "string" },
+        "memberPhoneNumber": { "type": "string" },
+        "alertOnCalls": { "type": "boolean" },
+        "alertOnMessages": { "type": "boolean" },
+        "alertOnRegistry": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "memberName", "memberPhoneNumber"]
+    },
+    "MessageRecord": {
+      "title": "Message Record",
+      "description": "Log of messages and their fraud analysis",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "sender": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": { "type": "string" },
+        "threatLevel": { "type": "string", "enum": ["Threat", "Caution", "Safe"] },
+        "category": { "type": "string" },
+        "summary": { "type": "string" }
+      },
+      "required": ["userId", "content", "threatLevel"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Store user profile data"
+    },
+    "/calls/{callId}": {
+      "schema": "CallRecord",
+      "description": "Store logs of all incoming calls"
+    },
+    "/family/{familyId}": {
+      "schema": "FamilyMember",
+      "description": "Store family network connections"
+    },
+    "/messages/{messageId}": {
+      "schema": "MessageRecord",
+      "description": "Store logs of messages and fraud analysis"
+    }
+  }
+}

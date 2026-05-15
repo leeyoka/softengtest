@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Phase 4: Validation Helpers
+    function isValidUser(data) {
+      return data.keys().hasAll(['name', 'phoneNumber']) &&
+             data.keys().size() >= 2 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.phoneNumber is string && data.phoneNumber.size() > 0 && data.phoneNumber.size() <= 20;
+    }
+
+    function isValidCallRecord(data) {
+      return data.keys().hasAll(['phoneNumber', 'timestamp', 'threatLevel', 'userId']) &&
+             data.phoneNumber is string && data.phoneNumber.size() <= 20 &&
+             (data.keys().hasAny(['callerName']) ? (data.callerName is string && data.callerName.size() <= 100) : true) &&
+             data.timestamp is timestamp &&
+             (data.keys().hasAny(['status']) ? (data.status in ['answered', 'missed', 'blocked']) : true) &&
+             (data.keys().hasAny(['duration']) ? (data.duration is number) : true) &&
+             data.threatLevel in ['Threat', 'Caution', 'Safe'] &&
+             (data.keys().hasAny(['scamIndicators']) ? (data.scamIndicators is string && data.scamIndicators.size() <= 500) : true) &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidFamilyMember(data) {
+      return data.keys().hasAll(['userId', 'memberName', 'memberPhoneNumber']) &&
+             data.userId == request.auth.uid &&
+             data.memberName is string && data.memberName.size() <= 100 &&
+             data.memberPhoneNumber is string && data.memberPhoneNumber.size() <= 20 &&
+             (data.keys().hasAny(['alertOnThreats']) ? (data.alertOnThreats is bool) : true) &&
+             (data.keys().hasAny(['alertOnCautions']) ? (data.alertOnCautions is bool) : true);
+    }
+
+    // Collection Rules
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId && isValidId(userId);
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidId(userId) && 
+                      isValidUser(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidId(userId) && 
+                      isValidUser(incoming()) && incoming().updatedAt == request.time && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phoneNumber', 'updatedAt'])
+      );
+    }
+
+    match /calls/{callId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid && isValidId(callId);
+      allow create: if isSignedIn() && isValidId(callId) && isValidCallRecord(incoming()) && 
+                      incoming().timestamp == request.time;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && isValidId(callId) && 
+                      isValidCallRecord(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'duration', 'threatLevel', 'scamIndicators'])
+      );
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid && isValidId(callId);
+    }
+
+    match /family/{familyId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid && isValidId(familyId);
+      allow create: if isSignedIn() && isValidId(familyId) && isValidFamilyMember(incoming()) && 
+                      incoming().createdAt == request.time;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && isValidId(familyId) && 
+                      isValidFamilyMember(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['memberName', 'memberPhoneNumber', 'alertOnThreats', 'alertOnCautions'])
+      );
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid && isValidId(familyId);
+    }
+  }
+}
